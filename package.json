@@ -1,6 +1,6 @@
 {
   "name": "nogl-shader-output",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Process fragment shader on a rectangular canvas, webgl-less",
   "main": "index.js",
   "directories": {
