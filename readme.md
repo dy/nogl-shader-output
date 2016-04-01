@@ -1,4 +1,4 @@
-Process rectangular shaders without webgl and obtain the reslut. Can be used for shaders unit testing, audio processing etc. See [glsl-hsl2rgb](https://github.com/Jam3/glsl-hsl2rgb) or [audio-shader](https://github.com/audio-lab/audio-shader) for practical examples.
+Process rectangular shaders without webgl and obtain the reslut. Can be used for shaders unit testing, audio processing etc. A handy replacement for [gl-shader-output](https://github.com/jam3/gl-shader-output) in node.js.
 
 
 [![npm install nogl-shader-output](https://nodei.co/npm/nogl-shader-output.png?mini=true)](https://npmjs.org/package/nogl-shader-output/)
@@ -53,5 +53,5 @@ The return value is the gl_FragColor RGBA of the canvas, in floats, such as `[0.
 
 ## Related
 
-* [gl-shader-output](http://npmjs.org/package/gl-shader-output) — a webgl browser version of fragment shader processor.
+* [gl-shader-output](http://npmjs.org/package/gl-shader-output) — a webgl version of fragment shader processor.
 * [audio-shader](https://github.com/audio-lab/audio-shader) — an example case of application of nogl-shader-output for processing audio.

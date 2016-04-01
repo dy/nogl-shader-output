@@ -1,11 +1,32 @@
 var test = require('tst')
 var glslify = require('glslify');
-var almost = require('array-almost-equal');
+var almost = require('almost-equal');
 var assert = require('assert');
 var Shader = require('gl-shader');
 var createGlContext = require('webgl-context');
 var createGl = require('gl-shader-output')
 var createNogl = require('../')
+
+
+
+/**
+ * Add almost method
+ */
+assert.almost = function (x, y) {
+    if (Array.isArray(x) && Array.isArray(y)) return x.every(function (xi, i) {
+        try {
+            assert.almost(xi, y[i]);
+        } catch (e) {
+            assert.fail(x, y, `${x} ≈ ${y}`, '≈')
+        }
+    });
+
+    var EPSILON = 10e-10;
+    if (!almost(x, y, EPSILON)) assert.fail(x, y,
+        `${x} ≈ ${y}`, '≈');
+    return true;
+};
+
 
 
 test('should process single point', function() {
@@ -14,19 +35,12 @@ test('should process single point', function() {
 
     var max = 10e2;
 
-    test.skip('webgl', function () {
-        var draw = createGl(fShader);
-        assert.deepEqual(draw(), [0, 0, 1, 1]);
-    });
-
-    test('nogl', function () {
-        var draw = createNogl(fShader);
-        assert.deepEqual(draw(), [0, 0, 1, 1]);
-    });
+    var draw = createNogl(fShader);
+    assert.deepEqual(draw(), [0, 0, 1, 1]);
 });
 
 
-test('gl vs nogl performance', function() {
+test.skip('gl vs nogl performance', function() {
     var vShader = glslify('./shaders/test.vert');
     var fShader = glslify('./shaders/blue.frag');
 
@@ -54,44 +68,23 @@ test('should process more-than-one dimension input', function() {
         glslify('./shaders/blue.frag')
     );
 
-    test.skip('webgl', function () {
-        var draw = createGl({
-            shader: shader,
-            width: 2,
-            height: 2
-        });
-        assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1])
+    var draw = createNogl({
+        shader: shader,
+        width: 2,
+        height: 2
     });
-
-    test('nogl', function () {
-        var draw = createNogl({
-            shader: shader,
-            width: 2,
-            height: 2
-        });
-        assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1])
-    });
+    assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1])
 });
 
-test.skip('should be able to handle alpha', function() {
+test('should be able to handle alpha', function() {
     var shader = Shader(createGlContext(),
         glslify('./shaders/test.vert'),
         glslify('./shaders/alpha.frag')
     );
-
-    test('webgl', function () {
-        var draw = createGl({
-            shader: shader
-        });
-        assert.deepEqual(draw(), [0, 0, 1, 0])
+    var draw = createNogl({
+        shader: shader
     });
-
-    test('nogl', function () {
-        var draw = createNogl({
-            shader: shader
-        });
-        assert.deepEqual(draw(), [0, 0, 1, 0])
-    });
+    assert.deepEqual(draw(), [0, 0, 1, 0])
 });
 
 
@@ -104,22 +97,11 @@ test('should accept uniforms', function() {
     var input = [0, 0.25, 0.5, 1.0]
     var reversed = input.slice().reverse();
 
-    test('webgl', function () {
-        var draw = createGl({
-            shader: shader
-        })
+    var draw = createNogl({
+        shader: shader
+    })
 
-        almost(draw({ u_value: input, multiplier: 1.0 }), reversed, 0.01)
-        almost(draw({ u_value: input, multiplier: 3.0 }), [ 1, 1, 0.75, 0 ], 0.01)
-    });
-
-    test('nogl', function () {
-        var draw = createNogl({
-            shader: shader
-        })
-
-        almost(draw({ u_value: input, multiplier: 1.0 }), reversed, 0.01)
-        almost(draw({ u_value: input, multiplier: 3.0 }), [ 1, 1, 0.75, 0 ], 0.01)
-    });
+    assert.almost(draw({ u_value: input, multiplier: 1.0 }), reversed, 0.01)
+    assert.almost(draw({ u_value: input, multiplier: 3.0 }), [ 3, 1.5, 0.75, 0 ], 0.01)
 
 });
