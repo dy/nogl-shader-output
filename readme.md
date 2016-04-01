@@ -1,4 +1,4 @@
-Process rectangular shaders without webgl and obtain the reslut. Can be used for shaders unit testing, audio processing etc. A handy replacement for [gl-shader-output](https://github.com/jam3/gl-shader-output) in node.js.
+Process rectangular shaders without webgl and obtain the reslut. Can be used for shaders unit testing, audio processing etc. A nogl-analog for [gl-shader-output](https://github.com/jam3/gl-shader-output) in node.js.
 
 
 [![npm install nogl-shader-output](https://nodei.co/npm/nogl-shader-output.png?mini=true)](https://npmjs.org/package/nogl-shader-output/)
@@ -33,11 +33,10 @@ almostEqual(color2, [0.0, 0.5, 0.0, 1.0], epsilon)
 
 ## API
 
-#### `draw = ShaderOutput(source?, options?)`
+#### `draw = ShaderOutput(shader, options?)`
 
 Takes a shader object/source and an options object, and returns a `draw` function. Possible options:
 
-- `shader` the shader, can be a source of fragment shader or an instance of gl-shader. Same as passing shader as the only argument.
 - `width` the width of a drawing buffer, by default - 1
 - `height` the height of a drawing buffer, by default - 1
 
