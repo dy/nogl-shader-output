@@ -39,23 +39,33 @@ test('should process single point', function() {
 });
 
 
-test.skip('gl vs nogl performance', function() {
+test('gl vs nogl performance', function() {
+    if (!isBrowser) return;
+
     var vShader = glslify('./shaders/test.vert');
     var fShader = glslify('./shaders/blue.frag');
 
-    var max = 10e2;
+    var max = 7;
 
-    // var drawGl = createGl(fShader);
-    var drawNogl = createNogl(fShader);
-
-    test.skip('webgl', function () {
-        for (var i = 0; i < max; i++) {
-            drawGl();
-        }
+    var drawGl = createGl(fShader, {
+        width: 1024,
+        height: 1024
     });
+    var drawNogl = createNogl(fShader, {
+        width: 1024,
+        height: 1024
+    });
+
+    //nogl is times faster to set up
+    //but 2-3 times slower for processing big images
     test('nogl', function () {
         for (var i = 0; i < max; i++) {
             drawNogl();
+        }
+    });
+    test('webgl', function () {
+        for (var i = 0; i < max; i++) {
+            drawGl();
         }
     });
 });
@@ -71,8 +81,7 @@ test('should process more-than-one dimension input', function() {
         var shader = glslify('./shaders/blue.frag');
     }
 
-    var draw = createNogl({
-        shader: shader,
+    var draw = createNogl(shader, {
         width: 2,
         height: 2
     });
@@ -89,9 +98,7 @@ test('should be able to handle alpha', function() {
         var shader = glslify('./shaders/alpha.frag');
     }
 
-    var draw = createNogl({
-        shader: shader
-    });
+    var draw = createNogl(shader);
     assert.deepEqual(draw(), [0, 0, 1, 0])
 });
 
@@ -109,11 +116,8 @@ test('should accept uniforms', function() {
     var input = [0, 0.25, 0.5, 1.0]
     var reversed = input.slice().reverse();
 
-    var draw = createNogl({
-        shader: shader
-    })
+    var draw = createNogl(shader)
 
     assert.almost(draw({ u_value: input, multiplier: 1.0 }), reversed, 0.01)
     assert.almost(draw({ u_value: input, multiplier: 3.0 }), [ 3, 1.5, 0.75, 0 ], 0.01)
-
 });

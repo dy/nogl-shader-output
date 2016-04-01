@@ -14,38 +14,21 @@ module.exports = create;
  * Shader constructor
  */
 function create (shader, options) {
-	//resolve incomplete args
-	if (!options) {
-		//just options
-		if (typeof shader === 'object' && !shader.fragShader) {
-			options = shader;
-		}
-		//just a shader object
-		else {
-			options = {
-				shader: shader
-			};
-		}
-	}
-	else {
-		options.shader = shader;
-	}
-
 	options = extend({
 		width: 1,
 		height: 1
 	}, options);
 
 	//reset gl-shader object
-	if (options.shader.fragShader) {
-		options.shader = options.shader._fref.src;
+	if (shader.fragShader) {
+		shader = shader._fref.src;
 	};
 
 	var width = options.width, height = options.height;
 
 
 	//create compiler each time anew, as old compiler keeps secrets of old code
-	var compiler = new GLSL({
+	var compile = new GLSL({
 		replaceUniform: shaderVar,
 		replaceAttribute: shaderVar,
 		replaceVarying: shaderVar
@@ -55,9 +38,7 @@ function create (shader, options) {
 		return `__data.${name}`;
 	};
 
-	create.compile = compiler;
-
-	var source = create.compile(options.shader);
+	var source = compile(shader);
 
 	var process = new Function('__data', `
 		${source}

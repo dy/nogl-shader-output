@@ -48,7 +48,7 @@
   "devDependencies": {
     "almost-equal": "^1.1.0",
     "gl-shader": "^4.2.0",
-    "gl-shader-output": "^1.0.2",
+    "gl-shader-output": "^2.0.1",
     "glslify": "^5.0.2",
     "glslify-promise": "^1.0.1",
     "glslify-sync": "^1.1.1",
