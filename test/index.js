@@ -13,11 +13,11 @@ var isBrowser = require('is-browser');
  * Add almost method
  */
 assert.almost = function (x, y) {
-    if (Array.isArray(x) && Array.isArray(y)) return x.every(function (xi, i) {
+    if (x && x.length != null && y && y.length != null) return x.every(function (xi, i) {
         try {
             assert.almost(xi, y[i]);
         } catch (e) {
-            assert.fail(x, y, `${x} ≈ ${y}`, '≈')
+            assert.fail(x, y, `${(x+'').slice(0,10)} ≈ ${(y+'').slice(0,10)}, specifically x[${i}] == ${xi} ≈ ${y[i]}`, '≈')
         }
     });
 
@@ -104,7 +104,7 @@ test('should be able to handle alpha', function() {
 
 
 test('should accept uniforms', function() {
-     if (isBrowser) {
+    if (isBrowser) {
         var shader = Shader(createGlContext(),
             glslify('./shaders/test.vert'),
             glslify('./shaders/uniforms.frag')
@@ -120,4 +120,27 @@ test('should accept uniforms', function() {
 
     assert.almost(draw({ u_value: input, multiplier: 1.0 }), reversed, 0.01)
     assert.almost(draw({ u_value: input, multiplier: 3.0 }), [ 3, 1.5, 0.75, 0 ], 0.01)
+});
+
+
+test('gl_FragCoord', function () {
+    var src = `
+        precision highp float;
+
+        void main () {
+            gl_FragColor = vec4(gl_FragCoord) / 40.0;
+        }
+    `
+
+    var drawGl = createGl(src, {
+        width: 40,
+        height: 40
+    })
+
+    var drawNogl = createNogl(src, {
+        width: 40,
+        height: 40
+    })
+
+    assert.almost(drawGl(), drawNogl());
 });

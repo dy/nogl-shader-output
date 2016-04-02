@@ -43,15 +43,22 @@ function create (shader, options) {
 	var process = new Function('__data', `
 		${source}
 
-		var result = [], gl_FragColor = [0, 0, 0, 0], gl_FragCoord = [0, 0, 0, 0];
+		var result = new Float32Array(${width} * ${height} * 4), gl_FragColor = [0, 0, 0, 0], gl_FragCoord = [0, 0, 1, 1];
 
 		for (var j = 0; j < ${height}; j++) {
+			var row = j * ${width} * 4;
 			for (var i = 0; i < ${width}; i++) {
+				var col = i * 4;
+
+				gl_FragCoord[0] = i + 0.5;
+				gl_FragCoord[1] = j + 0.5;
+
 				main();
-				result.push(gl_FragColor[0]);
-				result.push(gl_FragColor[1]);
-				result.push(gl_FragColor[2]);
-				result.push(gl_FragColor[3]);
+
+				result[row + col] = gl_FragColor[0];
+				result[row + col + 1] = gl_FragColor[1];
+				result[row + col + 2] = gl_FragColor[2];
+				result[row + col + 3] = gl_FragColor[3];
 			}
 		}
 
