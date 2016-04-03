@@ -45,17 +45,12 @@ test('should process single point', function() {
 
 
 test('gl vs nogl performance', function() {
-	if (!isBrowser) return;
 
 	var vShader = glslify('./shaders/test.vert');
 	var fShader = glslify('./shaders/blue.frag');
 
 	var max = 7;
 
-	var drawGl = createGl(fShader, {
-		width: 1024,
-		height: 1024
-	});
 	var drawNogl = createNogl(fShader, {
 		width: 1024,
 		height: 1024
@@ -67,6 +62,12 @@ test('gl vs nogl performance', function() {
 		for (var i = 0; i < max; i++) {
 			drawNogl();
 		}
+	});
+
+	if (!isBrowser) return;
+	var drawGl = createGl(fShader, {
+		width: 1024,
+		height: 1024
 	});
 	test('webgl', function () {
 		for (var i = 0; i < max; i++) {
