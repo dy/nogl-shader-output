@@ -1,4 +1,4 @@
-Process rectangular shaders without webgl and obtain the reslut. Can be used for shaders unit testing, audio processing etc. A nogl-analog for [gl-shader-output](https://github.com/jam3/gl-shader-output) in node.js.
+Process rectangular shaders without webgl and obtain the reslut. Can be used for shaders unit testing, audio processing etc. A nogl analog for [gl-shader-output](https://github.com/jam3/gl-shader-output).
 
 
 [![npm install nogl-shader-output](https://nodei.co/npm/nogl-shader-output.png?mini=true)](https://npmjs.org/package/nogl-shader-output/)
@@ -35,7 +35,7 @@ almostEqual(color2, [0.0, 0.5, 0.0, 1.0], epsilon)
 
 #### `draw = ShaderOutput(shader, options?)`
 
-Takes a shader object/source and an options object, and returns a `draw` function. Possible options:
+Takes a gl-shader instance or fragment shader source and an options, returns a `draw` function. Possible options:
 
 - `width` the width of a drawing buffer, by default - 1
 - `height` the height of a drawing buffer, by default - 1
@@ -50,7 +50,17 @@ Where `uniforms` is an optional map of uniform names to values (such as `[x, y]`
 
 The return value is the gl_FragColor RGBA of the canvas, in floats, such as `[0.5, 1.0, 0.25, 1.0]`.
 
+**Hint:** you can define varyings by passing gl-shader instance with custom vertex shader. To create gl-shader in node, you can use [nogl](https://github.com/dfcreative/nogl):
+
+```js
+var gl = require('nogl')();
+var shader = require('gl-shader')(gl, vertexSrc, fragmentSrc);
+var draw = require('nogl-shader-output')(shader);
+```
+
+
 ## Related
 
 * [gl-shader-output](http://npmjs.org/package/gl-shader-output) — a webgl version of fragment shader processor.
 * [audio-shader](https://github.com/audio-lab/audio-shader) — an example case of application of nogl-shader-output for processing audio.
+* [nogl](https://npmjs.org/package/nogl) — WebGL shim for node.
