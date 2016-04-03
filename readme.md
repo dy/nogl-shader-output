@@ -1,4 +1,4 @@
-Process rectangular shaders without webgl and obtain the result. Can be used for shaders unit testing, audio processing etc. A nogl analog for [gl-shader-output](https://github.com/jam3/gl-shader-output).
+Process rectangular shaders without webgl and obtain the result. Can be used for shaders unit testing, audio processing etc. A nogl analog of [gl-shader-output](https://github.com/jam3/gl-shader-output) for node.
 
 
 [![npm install nogl-shader-output](https://nodei.co/npm/nogl-shader-output.png?mini=true)](https://npmjs.org/package/nogl-shader-output/)
