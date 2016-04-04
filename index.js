@@ -58,13 +58,15 @@ function create (shader, options) {
 	//get varying attributes from vertex shader
 	//luckily we can run vertex shader for 4 point coords to get simple rect interpolation afterwards
 	var vSource = compile(vShader);
+	var fSource = compile(fShader);
 
 	var varyings = compile.compiler.varyings;
-	var varyingsStr = Object.keys(varyings).map(function (name) {
+
+	var setVaryingsStr = Object.keys(varyings).map(function (name) {
 		return `__varying.${name} = ${name};`
 	}).join('\n');
 
-	var processVaryings = new Function('position', '__varying', `
+	var processVaryings = new Function('__uniform', 'position', '__varying', `
 		${vSource};
 
 		var gl_Position = [0, 0, 0, 0];
@@ -72,43 +74,11 @@ function create (shader, options) {
 
 		main();
 
-		${varyingsStr}
+		${setVaryingsStr}
 
 		return gl_Position;
 	`);
 
-	var positions = [[-1, -1], [-1, 3], [3, -1]];
-	var varyingVerteces = [{}, {}, {}, {}];
-	var gl_Positions = positions.map(function (position, i) {
-		return processVaryings(position, varyingVerteces[i]);
-	});
-
-	//calculate interpolations for each varying beforehead
-	var varyingValues = {};
-	for (var name in varyings) {
-		//FIXME: handle applied scaling to gl_Position
-		//map val in 1x1 square to from→to transformation square
-		// var scale = [(to[2][0] - to[0][0])/(from[2][0] - from[0][0])||0, (to[1][1] - to[0][1])/(from[1][1] - from[0][1])||0];
-		// var shift = [to[0][0] - from[0][0], to[0][1] - from[0][1]];
-
-		var v = [
-			varyingVerteces[0][name],
-			varyingVerteces[1][name],
-			varyingVerteces[2][name]
-		];
-
-		//interp values for each fragment
-		var arr = [];
-		for (var j = 0; j < height; j++) {
-			for (var i = 0; i < width; i++) {
-				//FIXME: some rotation happens here (mixed widht/height order)
-				//it works alright but I dont understand why, thats specifics of WebGL
-				arr[j*width + i] = interpolate(v, (j+0.5)/(height), (i+0.5)/(width));
-			}
-		}
-
-		varyingValues[name] = arr;
-	}
 
 	//interpolate value on the range
 	function interpolate (v, x, y) {
@@ -134,25 +104,24 @@ function create (shader, options) {
 
 	//create shader draw fn
 	var getVaryingsStr = Object.keys(varyings).map(function (name) {
-		return `${name} = __varying.${name}[__offset];`
+		return `${name} = interpolate(__varying.${name}, __y, __x);`
 	}).join('\n');
 
-	compile.compiler.reset();
-	var source = compile(fShader);
-
 	var process = new Function('__uniform', '__varying', `
-		${source}
+		${fSource}
 
 		var __result = new Float32Array(${width * height * 4}),
 			gl_FragColor = [0, 0, 0, 0],
 			gl_FragCoord = [0, 0, 1.0, 1.0],
-			__offset, __chOffset, __lineOffset;
+			__offset, __chOffset, __lineOffset, __x, __y;
 
 		for (var __j = 0; __j < ${height}; __j++) {
 			__lineOffset = __j * ${width};
+			__y = (__j + 0.5) / ${height};
 			for (var __i = 0; __i < ${width}; __i++) {
 				__offset = __lineOffset + __i;
 				__chOffset = __offset * 4;
+				__x = (__i + 0.5) / ${width};
 
 				${getVaryingsStr}
 
@@ -169,10 +138,37 @@ function create (shader, options) {
 		}
 
 		return __result;
+
+		${interpolate.toString()}
 	`);
 
+	//positions buffer is fixed
+	var positions = [[-1, -1], [-1, 3], [3, -1]];
 
 	function draw (uniforms) {
+		//calculate varying edge values
+		var varyingVerteces = [{}, {}, {}];
+		var gl_Positions = positions.map(function (position, i) {
+			return processVaryings(uniforms, position, varyingVerteces[i]);
+		});
+
+		//rearrange varying verteces by named groups
+		var varyingValues = {};
+		for (var name in varyingVerteces[0]) {
+			//FIXME: handle applied scaling to gl_Position
+			//map val in 1x1 square to from→to transformation square
+			// var scale = [(to[2][0] - to[0][0])/(from[2][0] - from[0][0])||0, (to[1][1] - to[0][1])/(from[1][1] - from[0][1])||0];
+			// var shift = [to[0][0] - from[0][0], to[0][1] - from[0][1]];
+
+			var v = [
+				varyingVerteces[0][name],
+				varyingVerteces[1][name],
+				varyingVerteces[2][name]
+			];
+
+			varyingValues[name] = v;
+		}
+
 		return process(uniforms, varyingValues);
 	}
 

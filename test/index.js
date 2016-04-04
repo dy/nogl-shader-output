@@ -20,7 +20,7 @@ assert.almost = function (x, y) {
 		try {
 			assert.almost(xi, y[i]);
 		} catch (e) {
-			assert.fail(x, y, `${(x+'').slice(0,50)}... ≈ ${(y+'').slice(0,50)}... specifically x[${i}] == ${xi} ≈ ${y[i]}`, '≈')
+			assert.fail(x, y, `${(x+'').slice(0,50)}...\n≈\n${(y+'').slice(0,50)}...\n\nspecifically x[${i}] == ${xi} ≈ ${y[i]}`, '≈')
 			return false;
 		}
 		return true;
@@ -229,5 +229,85 @@ test('Varyings', function () {
 	   mult: 0.9
 	}), drawNogl( {
 	    mult: 0.9
+	}));
+});
+
+
+test('Vertex uniforms', function () {
+	if (!isBrowser) return;
+
+	var vSrc = `
+		attribute vec2 position;
+		varying vec2 offset;
+		uniform float shift;
+
+		void main() {
+			gl_Position = vec4(position, 1, 1);
+			offset = position + shift;
+		}
+	`;
+
+	var fSrc = `
+		precision highp float;
+
+		varying vec2 offset;
+		uniform float scale;
+
+		void main () {
+			gl_FragColor = vec4(offset * scale, 1.0, 1.0);
+		}
+	`;
+
+
+	var noglShader = Shader(createNoglContext(), vSrc, fSrc);
+	test('nogl', function () {
+		var drawNogl = createNogl(noglShader, {
+			width: 300,
+			height: 300
+		});
+		var arr = drawNogl({
+			scale: 2,
+			shift: 1
+		});
+		document.body.appendChild(savePixels(ndarray(arr.map(function (x,i) {
+			if (i%4 === 0) return x*100;
+			return x*255;
+		}), [300, 300, 4]), 'canvas'));
+	});
+
+
+	var glShader = Shader(createGlContext(), vSrc, fSrc);
+	test('gl', function () {
+		var drawGl = createGl(glShader, {
+		    width: 300,
+		    height: 300
+		});
+		var arr = drawGl({
+			scale: 2,
+			shift: 1
+		});
+
+		document.body.appendChild(savePixels(ndarray(arr.map(function (x,i) {
+			if (i%4 === 0) return x*100;
+			return x*255;
+		}), [300, 300, 4]), 'canvas'));
+	});
+
+
+	var drawNogl = createNogl(noglShader, {
+		width: 20,
+		height: 20
+	});
+	var drawGl = createGl(glShader, {
+	    width: 20,
+	    height: 20
+	});
+
+	assert.almost(drawGl({
+	   scale: 0.9,
+	   shift: 0.5
+	}), drawNogl( {
+	    scale: 0.9,
+	   shift: 0.5
 	}));
 });
