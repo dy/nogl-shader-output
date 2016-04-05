@@ -258,7 +258,6 @@ test('Vertex uniforms', function () {
 		}
 	`;
 
-
 	var noglShader = Shader(createNoglContext(), vSrc, fSrc);
 	test('nogl', function () {
 		var drawNogl = createNogl(noglShader, {
@@ -310,4 +309,121 @@ test('Vertex uniforms', function () {
 	    scale: 0.9,
 	   shift: 0.5
 	}));
+});
+
+
+test.skip('Textures', function () {
+
+
+	shader = Shader(gl, '\
+		precision mediump float;\
+		attribute vec2 position;\
+		varying vec2 uv;\
+		void main (void) {\
+			gl_Position = vec4(position, 0, 1);\
+			uv = vec2(position.x * 0.5 + 0.5, - position.y * 0.5 + 0.5);\
+		}\
+	', '\
+		precision mediump float;\
+		uniform sampler2D image;\
+		varying vec2 uv;\
+		void main (void) {\
+			gl_FragColor = texture2D(image, uv);\
+		}\
+	');
+
+	shader.bind();
+});
+
+
+
+test.only('Nogl performance of heavy shaders', function () {
+	if (!isBrowser) return;
+
+	var vSrc = `
+		attribute vec2 position;
+		varying vec2 offset;
+		uniform float shift;
+
+		void main() {
+			gl_Position = vec4(position, 1, 1);
+			offset = position + shift;
+		}
+	`;
+
+	var fSrc = `
+		#define MOD2 vec2(.16632,.17369)
+
+		precision highp float;
+
+		varying vec2 offset;
+		uniform float scale;
+
+		float hash11(float p)
+		{
+			vec2 p2 = fract(vec2(p) * MOD2);
+			p2 += dot(p2.yx, p2.xy+19.19);
+			return fract(p2.x * p2.y);
+		}
+
+		float noise (float x)
+		{
+			float p = floor(x);
+			float f = fract(x);
+			f = f*f*(3.0-2.0*f);
+			return mix( hash11(p), hash11(p + 1.0), f)-.5;
+		}
+
+		void main () {
+			gl_FragColor = vec4(offset * scale, noise(offset.x), 1.0);
+		}
+	`;
+
+	max = 5;
+
+	var noglShader = Shader(createNoglContext(), vSrc, fSrc);
+	test('nogl', function () {
+		var drawNogl = createNogl(noglShader, {
+			width: 300,
+			height: 300
+		});
+		for (var i = 0; i < max; i++) {
+			drawNogl({
+				scale: 2,
+				shift: 1
+			});
+		}
+		var arr = drawNogl({
+			scale: 2,
+			shift: 1
+		});
+		document.body.appendChild(savePixels(ndarray(arr.map(function (x,i) {
+			if (i%4 === 0) return x*100;
+			return x*255;
+		}), [300, 300, 4]), 'canvas'));
+	});
+
+
+	var glShader = Shader(createGlContext(), vSrc, fSrc);
+	test('gl', function () {
+		var drawGl = createGl(glShader, {
+		    width: 300,
+		    height: 300
+		});
+		for (var i = 0; i < max; i++) {
+			drawGl({
+				scale: 2,
+				shift: 1
+			});
+		}
+		var arr = drawGl({
+			scale: 2,
+			shift: 1
+		});
+
+		document.body.appendChild(savePixels(ndarray(arr.map(function (x,i) {
+			if (i%4 === 0) return x*100;
+			return x*255;
+		}), [300, 300, 4]), 'canvas'));
+	});
 });
