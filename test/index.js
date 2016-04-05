@@ -337,7 +337,7 @@ test.skip('Textures', function () {
 
 
 
-test.only('Nogl performance of heavy shaders', function () {
+test('Nogl performance of heavy shaders', function () {
 	if (!isBrowser) return;
 
 	var vSrc = `
@@ -382,11 +382,11 @@ test.only('Nogl performance of heavy shaders', function () {
 	max = 5;
 
 	var noglShader = Shader(createNoglContext(), vSrc, fSrc);
-	test('nogl', function () {
 		var drawNogl = createNogl(noglShader, {
 			width: 300,
 			height: 300
 		});
+	test('nogl', function () {
 		for (var i = 0; i < max; i++) {
 			drawNogl({
 				scale: 2,
