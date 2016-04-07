@@ -337,9 +337,8 @@ test.skip('Textures', function () {
 
 
 
-test('Nogl performance of heavy shaders', function () {
-	if (!isBrowser) return;
 
+test.only('Nogl performance of heavy shaders', function () {
 	var vSrc = `
 		attribute vec2 position;
 		varying vec2 offset;
@@ -397,11 +396,14 @@ test('Nogl performance of heavy shaders', function () {
 			scale: 2,
 			shift: 1
 		});
+		if (!isBrowser) return;
 		document.body.appendChild(savePixels(ndarray(arr.map(function (x,i) {
 			if (i%4 === 0) return x*100;
 			return x*255;
 		}), [300, 300, 4]), 'canvas'));
 	});
+
+	if (!isBrowser) return;
 
 
 	var glShader = Shader(createGlContext(), vSrc, fSrc);
