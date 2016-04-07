@@ -91,7 +91,11 @@ test('should process more-than-one dimension input', function() {
 		width: 2,
 		height: 2
 	});
-	assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1])
+	assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1]);
+	assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1]);
+	setTimeout(function () {
+		draw.end();
+	});
 });
 
 test('should be able to handle alpha', function() {
@@ -337,9 +341,7 @@ test.skip('Textures', function () {
 
 
 
-test('Nogl performance of heavy shaders', function () {
-	if (!isBrowser) return;
-
+test.only('Nogl performance of heavy shaders', function () {
 	var vSrc = `
 		attribute vec2 position;
 		varying vec2 offset;
@@ -397,11 +399,14 @@ test('Nogl performance of heavy shaders', function () {
 			scale: 2,
 			shift: 1
 		});
+		if (!isBrowser) return;
 		document.body.appendChild(savePixels(ndarray(arr.map(function (x,i) {
 			if (i%4 === 0) return x*100;
 			return x*255;
 		}), [300, 300, 4]), 'canvas'));
 	});
+
+	if (!isBrowser) return;
 
 
 	var glShader = Shader(createGlContext(), vSrc, fSrc);
