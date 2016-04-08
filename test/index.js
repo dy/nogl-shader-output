@@ -341,7 +341,7 @@ test.skip('Textures', function () {
 
 
 
-test.only('Nogl performance of heavy shaders', function () {
+test('Nogl performance of heavy shaders', function () {
 	var vSrc = `
 		attribute vec2 position;
 		varying vec2 offset;
@@ -384,17 +384,19 @@ test.only('Nogl performance of heavy shaders', function () {
 	max = 5;
 
 	var noglShader = Shader(createNoglContext(), vSrc, fSrc);
-		var drawNogl = createNogl(noglShader, {
-			width: 300,
-			height: 300
-		});
+	var drawNogl = createNogl(noglShader, {
+		width: 300,
+		height: 300,
+		threads: 1
+	});
+
 	test('nogl', function () {
-		for (var i = 0; i < max; i++) {
-			drawNogl({
-				scale: 2,
-				shift: 1
-			});
-		}
+		// for (var i = 0; i < max; i++) {
+		// 	drawNogl({
+		// 		scale: 2,
+		// 		shift: 1
+		// 	});
+		// }
 		var arr = drawNogl({
 			scale: 2,
 			shift: 1
@@ -415,12 +417,12 @@ test.only('Nogl performance of heavy shaders', function () {
 		    width: 300,
 		    height: 300
 		});
-		for (var i = 0; i < max; i++) {
-			drawGl({
-				scale: 2,
-				shift: 1
-			});
-		}
+		// for (var i = 0; i < max; i++) {
+		// 	drawGl({
+		// 		scale: 2,
+		// 		shift: 1
+		// 	});
+		// }
 		var arr = drawGl({
 			scale: 2,
 			shift: 1

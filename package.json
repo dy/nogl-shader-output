@@ -14,9 +14,6 @@
   "files": [
     "index.js"
   ],
-  "browser": {
-    "./lib/worker": "webworker-threads"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dfcreative/nogl-shader-output.git"

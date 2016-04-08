@@ -19,7 +19,7 @@ function create (shader, options) {
 	options = extend({
 		width: 1,
 		height: 1,
-		threads: 16
+		threads: 4
 	}, options);
 
 
@@ -124,7 +124,8 @@ function create (shader, options) {
 		//so to avoid recreation of shader’s stuff on each call
 		var fragmentShader = new Function(`
 			this.onmessage = function(event) {
-				postMessage(__process(event.data.uniforms, event.data.varyings));
+				var result = __process(event.data.uniforms, event.data.varyings);
+				postMessage(result);
 			};
 
 			var gl_FragColor, gl_FragCoord;
@@ -141,7 +142,7 @@ function create (shader, options) {
 				gl_FragColor = [0, 0, 0, 0];
 				gl_FragCoord = [0, 0, 1.0, 1.0];
 
-				//FIXME: if there is error this will hand indefinitely
+				//FIXME: if there is error this will hang indefinitely
 				var __result = Array(${(end - start) * 4}),
 					__x, __y, __i, __j;
 
@@ -207,9 +208,13 @@ function create (shader, options) {
 					uniforms: uniforms,
 					varyings: varyings
 				});
+				worker.onerror = function (err) {
+					worker.onerror = null;
+					reject(err);
+				};
 				worker.onmessage = function (result) {
 					worker.onmessage = null;
-					resolve(result);
+					resolve(result.data);
 				};
 			})
 		}))
@@ -218,7 +223,7 @@ function create (shader, options) {
 			var result = new Float32Array(width * height * 4);
 
 			for (var i = 0; i < results.length; i++) {
-				result.set(results[i].data, (size * 4 * i) | 0);
+				result.set(results[i], (size * 4 * i) | 0);
 			}
 
 			cb(null, result);
