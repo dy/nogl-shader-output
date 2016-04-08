@@ -5,9 +5,6 @@
  */
 var GLSL = require('glsl-transpiler');
 var extend = require('xtend/mutable');
-var deasync = require('deasync');
-var Worker = require('webworker-threads').Worker;
-
 
 module.exports = create;
 
@@ -18,8 +15,7 @@ module.exports = create;
 function create (shader, options) {
 	options = extend({
 		width: 1,
-		height: 1,
-		threads: 4
+		height: 1
 	}, options);
 
 
@@ -46,7 +42,7 @@ function create (shader, options) {
 
 
 	var width = options.width, height = options.height;
-	var threads = Math.min(options.threads, width*height);
+	var threads = 1;
 	var size = width * height / threads;
 
 
@@ -122,19 +118,14 @@ function create (shader, options) {
 
 		//process function is created in closure
 		//so to avoid recreation of shader’s stuff on each call
-		var fragmentShader = new Function(`
-			this.onmessage = function(event) {
-				var result = __process(event.data.uniforms, event.data.varyings);
-				postMessage(result);
-			};
-
+		var createFragmentShader = new Function(`
 			var gl_FragColor, gl_FragCoord;
 
 			${fSource}
 
 			${interpolate.toString()}
 
-			function __process (__u, __v) {
+			return function __process (__u, __v) {
 				${Object.keys(uniforms).map(function (name) {
 					return `${name} = __u.${name}`;
 				}).join(';\n')}
@@ -143,12 +134,12 @@ function create (shader, options) {
 				gl_FragCoord = [0, 0, 1.0, 1.0];
 
 				//FIXME: if there is error this will hang indefinitely
-				var __result = Array(${(end - start) * 4}),
+				var __result = new Float32Array(${(end - start) * 4}),
 					__x, __y, __i, __j;
 
 				for (var __c = ${start * 4}, __offset = 0; __c < ${end * 4}; __c+=4, __offset += 4) {
 					__j = (__c / ${width * 4})|0;
-					__i = __c % ${width * 4};
+					__i = __c % ${width * 4} / 4;
 					__y = (__j + 0.5) / ${height};
 					__x = (__i + 0.5) / ${width};
 
@@ -171,7 +162,7 @@ function create (shader, options) {
 			}
 		`);
 
-		var worker = new Worker(fragmentShader);
+		var worker = createFragmentShader();
 
 		return worker;
 	}
@@ -199,58 +190,15 @@ function create (shader, options) {
 	}
 
 
-	//launch each shader
-	var processFragments = deasync(function (uniforms, varyings, cb) {
-		//FIXME: add timeout concurence here
-		Promise.all(workers.map(function (worker, i) {
-			return new Promise(function (resolve, reject) {
-				worker.postMessage({
-					uniforms: uniforms,
-					varyings: varyings
-				});
-				worker.onerror = function (err) {
-					worker.onerror = null;
-					reject(err);
-				};
-				worker.onmessage = function (result) {
-					worker.onmessage = null;
-					resolve(result.data);
-				};
-			})
-		}))
-		.then(function (results) {
-			//merge results to a single buffer
-			var result = new Float32Array(width * height * 4);
-
-			for (var i = 0; i < results.length; i++) {
-				result.set(results[i], (size * 4 * i) | 0);
-			}
-
-			cb(null, result);
-		}, cb);
-	});
-
-
-
 	//process passed uniforms
 	function draw (uniforms) {
 		uniforms = uniforms || {};
 
 		var varyings = processVerteces(uniforms);
-		var result = processFragments(uniforms, varyings);
+		var result = workers[0](uniforms, varyings);
 
 		return result;
 	}
-
-
-	//terminate workers on end of process
-	draw.end = function () {
-		process.nextTick(function () {
-			workers.forEach(function (worker) {
-				worker.terminate();
-			});
-		});
-	};
 
 
 	return draw;

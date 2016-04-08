@@ -93,9 +93,6 @@ test('should process more-than-one dimension input', function() {
 	});
 	assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1]);
 	assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1]);
-	setTimeout(function () {
-		draw.end();
-	});
 });
 
 test('should be able to handle alpha', function() {
@@ -230,9 +227,9 @@ test('Varyings', function () {
 	var drawGl = createGl(glShader, {width: 2, height: 2});
 
 	assert.almost(drawGl({
-	   mult: 0.9
+		mult: 0.9
 	}), drawNogl( {
-	    mult: 0.9
+		mult: 0.9
 	}));
 });
 
@@ -391,12 +388,12 @@ test('Nogl performance of heavy shaders', function () {
 	});
 
 	test('nogl', function () {
-		// for (var i = 0; i < max; i++) {
-		// 	drawNogl({
-		// 		scale: 2,
-		// 		shift: 1
-		// 	});
-		// }
+		for (var i = 0; i < max; i++) {
+			drawNogl({
+				scale: 2,
+				shift: 1
+			});
+		}
 		var arr = drawNogl({
 			scale: 2,
 			shift: 1
@@ -417,12 +414,12 @@ test('Nogl performance of heavy shaders', function () {
 		    width: 300,
 		    height: 300
 		});
-		// for (var i = 0; i < max; i++) {
-		// 	drawGl({
-		// 		scale: 2,
-		// 		shift: 1
-		// 	});
-		// }
+		for (var i = 0; i < max; i++) {
+			drawGl({
+				scale: 2,
+				shift: 1
+			});
+		}
 		var arr = drawGl({
 			scale: 2,
 			shift: 1
