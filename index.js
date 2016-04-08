@@ -42,6 +42,9 @@ function create (shader, options) {
 
 
 	var width = options.width, height = options.height;
+	var threads = 1;
+	var size = width * height / threads;
+
 
 
 	//create compiler each time anew, as old compiler keeps secrets of old code
@@ -62,10 +65,9 @@ function create (shader, options) {
 	var varyings = compile.compiler.varyings;
 	var uniforms = compile.compiler.uniforms;
 
-
 	//create varying range calculator
 	if (Object.keys(varyings).length) {
-		var createProcessVaryings = new Function (`
+		var processVerteces = new Function (`
 			var gl_Position, gl_PointSize, position;
 
 			${vSource}
@@ -95,11 +97,75 @@ function create (shader, options) {
 
 				return __varying;
 			}
-		`);
+		`)();
 	} else {
-		var createProcessVaryings = function () {return function () { return {}; }}
+		var processVerteces = function () { return {}; };
 	}
 
+
+	//create number of threads
+	var workers = [];
+	for (var i = 0; i < threads; i++) {
+		var worker = createWorker(i);
+		workers.push(worker);
+	}
+
+
+	function createWorker (i) {
+		//specify range for a shader
+		var start = Math.floor(size * i),
+			end = Math.floor(size * (i+1));
+
+		//process function is created in closure
+		//so to avoid recreation of shader’s stuff on each call
+		var createFragmentShader = new Function(`
+			var gl_FragColor, gl_FragCoord;
+
+			${fSource}
+
+			${interpolate.toString()}
+
+			return function __process (__u, __v) {
+				${Object.keys(uniforms).map(function (name) {
+					return `${name} = __u.${name}`;
+				}).join(';\n')}
+
+				gl_FragColor = [0, 0, 0, 0];
+				gl_FragCoord = [0, 0, 1.0, 1.0];
+
+				//FIXME: if there is error this will hang indefinitely
+				var __result = new Float32Array(${(end - start) * 4}),
+					__x, __y, __i, __j;
+
+				for (var __c = ${start * 4}, __offset = 0; __c < ${end * 4}; __c+=4, __offset += 4) {
+					__j = (__c / ${width * 4})|0;
+					__i = __c % ${width * 4} / 4;
+					__y = (__j + 0.5) / ${height};
+					__x = (__i + 0.5) / ${width};
+
+					${Object.keys(varyings).map(function (name) {
+						return `${name} = interpolate(__v.${name}, __y, __x)`;
+					}).join(';\n')}
+
+					gl_FragCoord[0] = __i + 0.5;
+					gl_FragCoord[1] = __j + 0.5;
+
+					main();
+
+					__result[__offset ] = gl_FragColor[0];
+					__result[__offset + 1] = gl_FragColor[1];
+					__result[__offset + 2] = gl_FragColor[2];
+					__result[__offset + 3] = gl_FragColor[3];
+				}
+
+				return __result;
+			}
+		`);
+
+		var worker = createFragmentShader();
+
+		return worker;
+	}
 
 
 	//interpolate value on the range bilinearly
@@ -124,54 +190,16 @@ function create (shader, options) {
 	}
 
 
-	//process function is created in closure
-	//so to avoid recreation of shader’s stuff on each call
-	var createDraw = new Function('__processVaryings', `
-		var gl_FragColor, gl_FragCoord;
+	//process passed uniforms
+	function draw (uniforms) {
+		uniforms = uniforms || {};
 
-		${fSource}
+		var varyings = processVerteces(uniforms);
+		var result = workers[0](uniforms, varyings);
 
-		${interpolate.toString()}
+		return result;
+	}
 
-		return function __process (__u) {
-			${Object.keys(uniforms).map(function (name) {
-					return `${name} = __u.${name}`;
-				}).join(';\n')}
-			gl_FragColor = [0, 0, 0, 0];
-			gl_FragCoord = [0, 0, 1.0, 1.0];
 
-			var __varying = __processVaryings(__u);
-
-			var __result = new Float32Array(${width * height * 4}),
-				__offset, __chOffset, __lineOffset, __x, __y;
-
-			for (var __j = 0; __j < ${height}; __j++) {
-				__lineOffset = __j * ${width};
-				__y = (__j + 0.5) / ${height};
-				for (var __i = 0; __i < ${width}; __i++) {
-					__offset = __lineOffset + __i;
-					__chOffset = __offset * 4;
-					__x = (__i + 0.5) / ${width};
-
-					${Object.keys(varyings).map(function (name) {
-						return `${name} = interpolate(__varying.${name}, __y, __x)`;
-					}).join(';\n')}
-
-					gl_FragCoord[0] = __i + 0.5;
-					gl_FragCoord[1] = __j + 0.5;
-
-					main();
-
-					__result[__chOffset] = gl_FragColor[0];
-					__result[__chOffset + 1] = gl_FragColor[1];
-					__result[__chOffset + 2] = gl_FragColor[2];
-					__result[__chOffset + 3] = gl_FragColor[3];
-				}
-			}
-
-			return __result;
-		}
-	`);
-
-	return createDraw(createProcessVaryings());
+	return draw;
 };

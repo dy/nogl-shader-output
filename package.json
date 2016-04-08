@@ -4,7 +4,8 @@
   "description": "Process fragment shader on a rectangular canvas, webgl-less",
   "main": "index.js",
   "directories": {
-    "test": "test"
+    "test": "test",
+    "lib": "lib"
   },
   "scripts": {
     "test": "node test/index.js",
@@ -47,8 +48,7 @@
     "gl-shader": "^4.2.0",
     "gl-shader-output": "^2.0.1",
     "glslify": "^5.0.2",
-    "glslify-promise": "^1.0.1",
-    "glslify-sync": "^1.1.1",
+    "glslify-sync": "^1.0.0",
     "is-browser": "^2.0.1",
     "ndarray": "^1.0.18",
     "ndarray-imshow": "^1.0.1",

@@ -91,7 +91,8 @@ test('should process more-than-one dimension input', function() {
 		width: 2,
 		height: 2
 	});
-	assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1])
+	assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1]);
+	assert.deepEqual(draw(), [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1]);
 });
 
 test('should be able to handle alpha', function() {
@@ -226,9 +227,9 @@ test('Varyings', function () {
 	var drawGl = createGl(glShader, {width: 2, height: 2});
 
 	assert.almost(drawGl({
-	   mult: 0.9
+		mult: 0.9
 	}), drawNogl( {
-	    mult: 0.9
+		mult: 0.9
 	}));
 });
 
@@ -336,9 +337,7 @@ test.skip('Textures', function () {
 });
 
 
-
-
-test.only('Nogl performance of heavy shaders', function () {
+test('Nogl performance of heavy shaders', function () {
 	var vSrc = `
 		attribute vec2 position;
 		varying vec2 offset;
@@ -381,10 +380,12 @@ test.only('Nogl performance of heavy shaders', function () {
 	max = 5;
 
 	var noglShader = Shader(createNoglContext(), vSrc, fSrc);
-		var drawNogl = createNogl(noglShader, {
-			width: 300,
-			height: 300
-		});
+	var drawNogl = createNogl(noglShader, {
+		width: 300,
+		height: 300,
+		threads: 1
+	});
+
 	test('nogl', function () {
 		for (var i = 0; i < max; i++) {
 			drawNogl({
